@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+    proxy:
+        container_name: proxy
+        restart: always
+        image: nginxproxy/nginx-proxy
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - /var/run/docker.sock:/tmp/docker.sock:ro
+            - ./certs:/etc/nginx/certs
+        networks:
+            - proxy
+
+    proxy-companion:        
+        container_name: proxy-companion
+        restart: always
+        image: zerkz/self-signed-proxy-companion
+        build: .
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - ./certs:/etc/nginx/certs
+
+
+    app:
+        container_name: example-app
+        image: tutum/apache-php:latest
+        environment:
+            VIRTUAL_HOST: "example.com.localhost,www.example.com.localhost,mail.example.com.localhost"
+            SELF_SIGNED_HOST: "example.com.localhost"
+        networks:
+            - proxy
+            
+
+networks:
+    proxy:
+  
